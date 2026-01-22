@@ -412,13 +412,53 @@
             font-size: 0.8rem;
             align-self: flex-end; /* Sağa yasla */
         }
+        .profile-image-container {
+            width: 100px;
+            height: 100px;
+            margin: 0 auto 15px auto;
+            position: relative; /* Bu satır artık çalışacak */
+            cursor: pointer;
+            /* group; SİLİNDİ - Hata buradaydı */
+        }
+
+        .profile-image-lg {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid #eee;
+            transition: all 0.3s ease;
+        }
+
+        .profile-image-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.5rem;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            z-index: 5;
+        }
+
+        .profile-image-container:hover .profile-image-overlay {
+            opacity: 1;
+        }
+
         .profile-edit-badge {
             position: absolute;
             bottom: 0;
             right: 0;
             width: 32px;
             height: 32px;
-            background-color: #3498db; /* Turuncu için: #e67e22 */
+            background-color: #3498db;
             color: white;
             border-radius: 50%;
             display: flex;
@@ -430,9 +470,145 @@
             z-index: 10;
             transition: transform 0.2s;
         }
+
         .profile-image-container:hover .profile-edit-badge {
             transform: scale(1.1);
             background-color: #2980b9;
+        }
+
+        .review-summary {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            padding: 15px 0;
+            border-bottom: 1px solid #eee;
+            margin-bottom: 15px;
+        }
+
+        .big-rating {
+            font-size: 3rem;
+            font-weight: bold;
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            line-height: 1;
+        }
+
+            .big-rating span {
+                font-size: 0.8rem;
+                color: #666;
+                margin-top: 5px;
+                font-weight: normal;
+            }
+
+        .rating-bars {
+            flex-grow: 1;
+            font-size: 0.8rem;
+            color: #666;
+        }
+
+        /* Yorum Kartı */
+        .review-card {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #f0f0f0;
+            padding-bottom: 15px;
+        }
+
+        .reviewer-img {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+            background: #ddd;
+        }
+
+        .review-content {
+            flex-grow: 1;
+        }
+
+        .reviewer-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 4px;
+        }
+
+        .reviewer-name {
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: #333;
+        }
+
+        .review-date {
+            font-size: 0.75rem;
+            color: #999;
+        }
+
+        .review-stars {
+            color: #f1c40f; /* Altın sarısı */
+            font-size: 0.8rem;
+            margin-bottom: 6px;
+        }
+
+        .review-text {
+            font-size: 0.9rem;
+            color: #555;
+            line-height: 1.4;
+        }
+
+        /* Puan Verme Formu */
+        .write-review-box {
+            background: #f9f9f9;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .star-rating-input {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin: 10px 0;
+        }
+
+        .star-btn {
+            font-size: 2rem;
+            color: #ddd;
+            cursor: pointer;
+            transition: color 0.2s;
+            background: none;
+            border: none;
+            padding: 0;
+        }
+
+            .star-btn.active {
+                color: #f1c40f;
+            }
+
+        .review-textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            margin-top: 10px;
+            resize: vertical;
+            min-height: 80px;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .mini-star-btn {
+            background: none;
+            border: 1px solid #eee;
+            color: #f39c12;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            cursor: pointer;
+            margin-left: 5px;
         }
     </style>
 </head>
@@ -485,19 +661,20 @@
             panel.style.transition = '';
             panel.style.transform = ''; // Varsa manuel kaydırmayı da sıfırla
 
-            // --- ADMIN KONTROLÜ (YENİ) ---
+            // --- ADMIN KONTROLÜ ---
             let adminButtonHtml = '';
-            // window.isAdmin fonksiyonu var mı ve true dönüyor mu?
             if (window.isAdmin && window.isAdmin()) {
                 adminButtonHtml = `
-                        <button onclick="window.enableEditMode('${venue.firebaseId}')"
-                                style="background:#34495e; color:white; border:none; padding:5px 10px; border-radius:5px; margin-bottom:10px; cursor:pointer; font-size:0.8rem; width:100%;">
-                            ✏️ Menüyü Düzenle (Admin)
-                        </button>
-                    `;
+                    <button onclick="window.enableEditMode('${venue.firebaseId}')"
+                            style="background:#34495e; color:white; border:none; padding:5px 10px; border-radius:5px; margin-bottom:10px; cursor:pointer; font-size:0.8rem; width:100%;">
+                        ✏️ Menüyü Düzenle (Admin)
+                    </button>
+                `;
             }
+
             // 1. Ürünlerin HTML içeriğini oluştur
-            let productsHtml = venue.products.map(prod => {
+            // DÜZELTME BURADA YAPILDI: (prod, index) eklendi
+            let productsHtml = venue.products.map((prod, index) => {
                 // Fiyat değişim mantığı
                 let priceChangeHtml = '';
                 if (prod.price > prod.oldPrice) {
@@ -511,26 +688,32 @@
                     ? `<div style="margin-top:5px;">${prod.allergens.map(a => `<span class="allergen-tag">⚠️ ${a}</span>`).join('')}</div>`
                     : '';
 
+                // Düzgün index kullanımı
+                const productTargetId = `${venue.firebaseId}_prod_${index}`;
+
                 return `
                     <div class="menu-item">
                         <div class="item-details">
-                            <h4>${prod.name} <span style="font-size:0.8em; color:#f1c40f">★ ${prod.rating}</span></h4>
+                            <h4 style="display:flex; align-items:center; gap:8px;">
+                                ${prod.name} 
+                                <button class="mini-star-btn" onclick="openReviewPage('${venue.firebaseId}', 'product', '${productTargetId}', '${prod.name}', ${index})">
+                                   ★ ${prod.rating ? prod.rating.toFixed(1) : '0.0'}
+                                </button>
+                            </h4>
                             <p class="item-desc">${prod.ingredients}</p>
                             ${allergensHtml}
                         </div>
                         <div class="price-box">
-                            <div class="current-price">${prod.price} ₺</div>
-                            ${priceChangeHtml}
+                             <div class="current-price">${prod.price} ₺</div>
+                             ${priceChangeHtml}
                         </div>
                     </div>`;
             }).join('');
 
-            // 2. Navigasyon Linki
+            // 2. Navigasyon Linki (DÜZELTME: $ işaretleri eklendi)
             const navLink = `https://www.google.com/maps/dir/?api=1&destination=${venue.coords[0]},${venue.coords[1]}&travelmode=walking`;
 
-            // 3. E-Posta Linki Oluşturma
-            // Konu başlığına otomatik olarak Mekan Adını yazar.
-            // %0D%0A kodu alt satıra geçmek içindir.
+            // 3. E-Posta Linki
             const mailSubject = `YETU Bildirim: ${venue.name}`;
             const mailBody = `Merhaba, ${venue.name} mekanında şu bilgiyi güncellemek/eklemek istiyorum:%0D%0A%0D%0A(Lütfen buraya hatalı fiyatı veya yeni bilgiyi yazınız)`;
             const mailLink = `mailto:yetu.metu26@gmail.com?subject=${mailSubject}&body=${mailBody}`;
@@ -543,7 +726,9 @@
 
                     <div class="venue-header">
                         <h2 class="venue-name">${venue.name}</h2>
-                        <div class="rating-badge">${venue.rating} / 5.0 (${venue.reviews} yorum)</div>
+                        <div class="rating-badge" style="cursor:pointer;" onclick="openReviewPage('${venue.firebaseId}', 'venue', '${venue.firebaseId}', '${venue.name}', null)">
+                            ★ ${venue.rating} / 5.0 (${venue.reviews} yorum)   ❯
+                        </div>
                     </div>
 
                     ${adminButtonHtml}
@@ -918,6 +1103,32 @@
             panel.classList.add('active');
         }
 
+        window.triggerPhotoUpload = function () {
+            const fileInput = document.getElementById('photoInput');
+            if (fileInput) {
+                fileInput.click();
+            }
+        };
+
+        window.handlePhotoSelected = function (input) {
+            if (input.files && input.files[0]) {
+                const file = input.files[0];
+
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    const img = document.getElementById('profileDisplayImage');
+                    if (img) img.src = e.target.result;
+                }
+                reader.readAsDataURL(file);
+
+                if (window.profilResmiYukle) {
+                    window.profilResmiYukle(file);
+                } else {
+                    alert("Yükleme fonksiyonu henüz hazır değil, lütfen bekleyin.");
+                }
+            }
+        };
+
         function handleProfileUpdate() {
             const newName = document.getElementById('updName').value;
             const newEmail = document.getElementById('updEmail').value;
@@ -1102,6 +1313,8 @@
         import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-analytics.js";
         import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile, updateEmail, updatePassword, GoogleAuthProvider, signInWithPopup, sendPasswordResetEmail, getAdditionalUserInfo } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js";
         import { getFirestore, collection, getDocs, addDoc, doc, updateDoc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js";
+        import { query, where } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js";
+
 
         // 2. Senin Firebase Ayarların
         const firebaseConfig = {
@@ -1122,6 +1335,16 @@
 
         // --- GLOBAL FONKSİYONLAR (Butonlar için) ---
         // --- GLOBAL FONKSİYONLAR ---
+
+        window.firestoreDB = db;
+        window.getAuthInstance = () => auth; // Auth nesnesini fonksiyonla alalım
+        window.fsQuery = query;
+        window.fsWhere = where;
+        window.fsCollection = collection;
+        window.fsAddDoc = addDoc;
+        window.fsGetDocs = getDocs;
+        window.fsDoc = doc;
+        window.fsUpdateDoc = updateDoc;
         window.kayitOl = async (email, sifre, kullaniciAdi) => {
             try {
                 // 1. Kullanıcıyı oluştur
@@ -1467,27 +1690,29 @@
 
                 let photo = user.photoURL;
 
-                if (!photo) {
-                    try {
-                        const userDoc = await getDoc(doc(db, "users", user.uid));
-                        if (userDoc.exists() && userDoc.data().photoBase64) {
-                            photo = userDoc.data().photoBase64;
-                        }
-                    } catch (e) {
-                        console.log("Profil resmi çekilemedi:", e);
+                try {
+                    const userDoc = await getDoc(doc(db, "users", user.uid));
+                    if (userDoc.exists() && userDoc.data().photoBase64) {
+                        photo = userDoc.data().photoBase64;
                     }
+                } catch (e) {
+                    console.log("Profil resmi veritabanından çekilemedi:", e);
                 }
 
                 window.currentUserPhoto = photo;
 
-                profileBtn.innerHTML = "✅";
+                if (photo) {
+                    profileBtn.innerHTML = `<img src="${photo}" class="profile-btn-img" style="width:100%; height:100%; object-fit:cover; border-radius:50%;">`;
+                } else {
+                    profileBtn.innerHTML = "👤";
+                }
+
                 profileBtn.style.border = "2px solid #2ecc71";
 
                 if (window.isAdmin && window.isAdmin()) {
                     document.getElementById('addVenueBtn').style.display = 'flex';
                 }
 
-                if (panel) panel.classList.remove('active');
 
             } else {
                 console.log("Çıkış yapıldı.");
@@ -1690,6 +1915,210 @@
 
         mekanlariGetir();
         console.log("Firebase, Auth ve Database hazır.");
+
+        // --- YORUM VE PUANLAMA SİSTEMİ ---
+
+        // 1. Yorum Sayfasını Açan Fonksiyon
+        window.openReviewPage = async (venueId, type, targetId, title, productIndex) => {
+            const contentDiv = document.getElementById('panelContent');
+            const panel = document.getElementById('infoPanel');
+
+            // Yükleniyor...
+            contentDiv.innerHTML = '<div style="text-align:center; padding:50px;">Yorumlar yükleniyor...</div>';
+
+            // Firebase'den yorumları çek
+            const db = window.firestoreDB; // db nesnesini aşağıda tanımlayacağız
+            let reviews = [];
+
+            try {
+                // "reviews" koleksiyonunda targetId'ye göre arama yap
+                const q = window.fsQuery(window.fsCollection(db, "reviews"), window.fsWhere("targetId", "==", targetId));
+                const querySnapshot = await window.fsGetDocs(q);
+
+                querySnapshot.forEach((doc) => {
+                    reviews.push(doc.data());
+                });
+
+                // Tarihe göre sırala (Yeni en üstte)
+                reviews.sort((a, b) => b.timestamp - a.timestamp);
+
+            } catch (e) {
+                console.error("Yorum çekme hatası:", e);
+            }
+
+            // HTML Oluştur
+            const venue = window.venues.find(v => v.firebaseId === venueId);
+            let currentRating = 0;
+            let totalReviews = reviews.length;
+
+            if (type === 'venue') {
+                currentRating = venue.rating;
+            } else {
+                currentRating = venue.products[productIndex].rating || 0;
+            }
+
+            let html = `
+        <div class="venue-header" style="border:none;">
+            <button onclick="window.openPanel(window.venues.find(v => v.firebaseId === '${venueId}'))" 
+                    style="background:none; border:none; font-size:1.2rem; cursor:pointer; float:left; margin-right:10px;">
+                ❮
+            </button>
+            <h2 class="venue-name" style="font-size:1.3rem;">${title}</h2>
+        </div>
+
+        <div class="review-summary">
+            <div class="big-rating">
+                ${currentRating}
+                <span>5 üzerinden</span>
+            </div>
+            <div class="rating-bars">
+                <div>Toplam ${totalReviews} yorum</div>
+                <div style="font-size:0.8rem; color:#999;">Buraya grafik barlar gelebilir</div>
+            </div>
+        </div>
+
+        <div class="write-review-box">
+            ${window.currentUserEmail ? `
+                <p>Bu ${type === 'venue' ? 'mekanı' : 'ürünü'} puanla:</p>
+                <div class="star-rating-input" id="starContainer">
+                    <button class="star-btn" onclick="selectStar(1)">★</button>
+                    <button class="star-btn" onclick="selectStar(2)">★</button>
+                    <button class="star-btn" onclick="selectStar(3)">★</button>
+                    <button class="star-btn" onclick="selectStar(4)">★</button>
+                    <button class="star-btn" onclick="selectStar(5)">★</button>
+                </div>
+                <textarea id="reviewText" class="review-textarea" placeholder="Deneyimini paylaş..."></textarea>
+                <button class="auth-btn btn-primary" style="margin-top:10px;" 
+                    onclick="submitReview('${venueId}', '${type}', '${targetId}', ${productIndex})">
+                    Gönder
+                </button>
+            ` : `
+                <p>Yorum yapmak için giriş yapmalısın.</p>
+                <button class="auth-btn btn-secondary" onclick="openAuthPanel()">Giriş Yap</button>
+            `}
+        </div>
+
+        <div>
+            ${reviews.length === 0 ? '<p style="text-align:center; color:#999;">Henüz yorum yapılmamış. İlk yorumu sen yap!</p>' : ''}
+            
+            ${reviews.map(review => `
+                <div class="review-card">
+                    <img src="${review.userPhoto || 'https://cdn-icons-png.flaticon.com/512/847/847969.png'}" class="reviewer-img">
+                    <div class="review-content">
+                        <div class="reviewer-header">
+                            <span class="reviewer-name">${review.userName}</span>
+                            <span class="review-date">${new Date(review.timestamp).toLocaleDateString('tr-TR')}</span>
+                        </div>
+                        <div class="review-stars">
+                            ${'★'.repeat(review.rating)}${'☆'.repeat(5 - review.rating)}
+                        </div>
+                        <div class="review-text">${review.comment}</div>
+                    </div>
+                </div>
+            `).join('')}
+        </div>
+    `;
+
+            contentDiv.innerHTML = html;
+            // Paneli aşağıdan yukarıya doğru tam açmak istersen burayı değiştirebilirsin
+            panel.classList.add('active');
+        };
+
+        // Global değişken: Seçilen yıldız sayısı
+        let selectedRating = 0;
+
+        window.selectStar = (count) => {
+            selectedRating = count;
+            const container = document.getElementById('starContainer');
+            const stars = container.getElementsByClassName('star-btn');
+
+            for (let i = 0; i < stars.length; i++) {
+                if (i < count) {
+                    stars[i].classList.add('active');
+                    stars[i].style.color = '#f1c40f';
+                } else {
+                    stars[i].classList.remove('active');
+                    stars[i].style.color = '#ddd';
+                }
+            }
+        };
+
+        window.submitReview = async (venueId, type, targetId, productIndex) => {
+            if (selectedRating === 0) {
+                alert("Lütfen en az 1 yıldız verin!");
+                return;
+            }
+
+            const comment = document.getElementById('reviewText').value;
+            const user = window.getAuthInstance().currentUser;
+            const db = window.firestoreDB;
+
+            // 1. Yorum Objesi
+            const newReview = {
+                targetId: targetId,
+                type: type, // 'venue' veya 'product'
+                venueId: venueId, // Filtreleme kolaylığı için
+                userId: user.uid,
+                userName: window.currentUserName || "Anonim",
+                userPhoto: window.currentUserPhoto,
+                rating: selectedRating,
+                comment: comment,
+                timestamp: Date.now()
+            };
+
+            try {
+                // 2. Yorumu 'reviews' koleksiyonuna ekle
+                await window.fsAddDoc(window.fsCollection(db, "reviews"), newReview);
+
+                // 3. Ortalamayı Hesapla ve Güncelle
+                // Önce tüm yorumları tekrar çekip ortalamayı bulalım (Doğruluk için)
+                // Gerçek uygulamada Cloud Functions ile yapmak daha iyidir ama burada client-side yapıyoruz.
+                const q = window.fsQuery(window.fsCollection(db, "reviews"), window.fsWhere("targetId", "==", targetId));
+                const snapshot = await window.fsGetDocs(q);
+
+                let totalScore = 0;
+                let count = 0;
+                snapshot.forEach(doc => {
+                    totalScore += doc.data().rating;
+                    count++;
+                });
+
+                let newAverage = Number((totalScore / count).toFixed(1));
+
+                // 4. Mekan veya Ürün verisini güncelle
+                const venueRef = window.fsDoc(db, "venues", venueId);
+                const venueLocal = window.venues.find(v => v.firebaseId === venueId);
+
+                if (type === 'venue') {
+                    await window.fsUpdateDoc(venueRef, {
+                        rating: newAverage,
+                        reviews: count
+                    });
+                    // Lokal veriyi güncelle
+                    venueLocal.rating = newAverage;
+                    venueLocal.reviews = count;
+                } else {
+                    // Ürün puanı güncelleme (Array içindeki objeyi güncellemek biraz tricklidir)
+                    // Tüm products array'ini al, ilgilini güncelle ve geri yaz.
+                    let products = venueLocal.products;
+                    if (products[productIndex]) {
+                        products[productIndex].rating = newAverage;
+                        // Veritabanına yaz
+                        await window.fsUpdateDoc(venueRef, { products: products });
+                    }
+                }
+
+                alert("Yorumunuz kaydedildi! Teşekkürler.");
+                // Sayfayı yenile
+                let title = type === 'venue' ? venueLocal.name : venueLocal.products[productIndex].name;
+                window.openReviewPage(venueId, type, targetId, title, productIndex);
+
+            } catch (error) {
+                console.error("Yorum hatası:", error);
+                alert("Hata oluştu: " + error.message);
+            }
+        };
+
     </script>
 </body>
 </html>
