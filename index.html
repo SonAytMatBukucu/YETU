@@ -412,6 +412,28 @@
             font-size: 0.8rem;
             align-self: flex-end; /* Sağa yasla */
         }
+        .profile-edit-badge {
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            width: 32px;
+            height: 32px;
+            background-color: #3498db; /* Turuncu için: #e67e22 */
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            border: 3px solid white;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            z-index: 10;
+            transition: transform 0.2s;
+        }
+        .profile-image-container:hover .profile-edit-badge {
+            transform: scale(1.1);
+            background-color: #2980b9;
+        }
     </style>
 </head>
 <body>
@@ -829,38 +851,82 @@
                 panel.style.transform = 'translateY(0)';
             }
         });
-        // --- GİRİŞ PANELİNİ AÇMA FONKSİYONU ---
+
         function openAuthPanel() {
             const contentDiv = document.getElementById('panelContent');
             const panel = document.getElementById('infoPanel');
 
-            // Eğer kullanıcı zaten giriş yapmışsa (Bunu global değişkenden anlayacağız)
             if (window.currentUserEmail) {
-                // --- PROFİL GÖRÜNÜMÜ ---
-                contentDiv.innerHTML = `
-                <div class="venue-header">
-                    <h2 class="venue-name">Profilim</h2>
-                </div>
-                <div style="text-align:center; margin-top:20px;">
-                    <div style="font-size: 3rem;">👋</div>
-                    <h3>Merhaba!</h3>
-                    <p style="color:#666; margin-bottom:20px;">${window.currentUserEmail}</p>
+                const currentName = window.currentUserName || "Kullanıcı";
+                const currentEmail = window.currentUserEmail || "";
+                const currentPhotoUrl = window.currentUserPhoto || "https://cdn-icons-png.flaticon.com/512/847/847969.png";
 
-                    <button class="auth-btn btn-primary" onclick="window.cikisYap(); closePanel();">
-                        Çıkış Yap
+                contentDiv.innerHTML = `
+            <div class="venue-header">
+                <h2 class="venue-name">Profilim</h2>
+            </div>
+            
+            <div style="text-align:center; padding:20px 10px; background:#f8f9fa; border-radius:15px; margin-bottom:20px;">
+                
+                <div class="profile-image-container" onclick="triggerPhotoUpload()">
+                    <img src="${currentPhotoUrl}" class="profile-image-lg" id="profileDisplayImage">
+                    
+                    <div class="profile-edit-badge">
+                        ✏️
+                    </div>
+
+                    <div class="profile-image-overlay">
+                        📷
+                    </div>
+                </div>
+
+                <input type="file" id="photoInput" hidden accept="image/png, image/jpeg" onchange="handlePhotoSelected(this)">
+
+                <h3 style="margin:10px 0 5px 0; font-size:1.4rem;">${currentName}</h3>
+                <p style="color:#666; font-size:0.9rem;">${currentEmail}</p>
+            </div>
+
+            <div style="border-top:1px solid #eee; padding-top:15px;">
+                <h4 style="margin-bottom:10px; color:#34495e;">⚙️ Profili Güncelle</h4>
+                
+                <div class="auth-form" style="margin-top:0;">
+                    <label style="font-size:0.8rem; font-weight:bold; color:#666;">Kullanıcı Adı</label>
+                    <input type="text" id="updName" class="auth-input" value="${currentName}" placeholder="Yeni Ad">
+
+                    <label style="font-size:0.8rem; font-weight:bold; color:#666;">E-posta Adresi</label>
+                    <input type="email" id="updEmail" class="auth-input" value="${currentEmail}" placeholder="Yeni Mail">
+
+                    <label style="font-size:0.8rem; font-weight:bold; color:#666;">Yeni Şifre (Değiştirmek istersen)</label>
+                    <input type="password" id="updPass" class="auth-input" placeholder="******">
+
+                    <button class="auth-btn btn-secondary" onclick="handleProfileUpdate()" style="background-color:#3498db;">
+                        💾 Bilgileri Güncelle
                     </button>
                 </div>
-            `;
+            </div>
+
+            <div style="margin-top:20px; border-top:1px solid #eee; padding-top:15px;">
+                <button class="auth-btn btn-primary" onclick="window.cikisYap(); closePanel();">
+                    Çıkış Yap
+                </button>
+            </div>
+        `;
             } else {
-                // --- GİRİŞ / KAYIT GÖRÜNÜMÜ ---
-                // Varsayılan olarak Giriş Formu gelsin
                 showLoginForm();
             }
 
             panel.classList.add('active');
         }
 
-        // Giriş Formunu HTML olarak çizen fonksiyon
+        function handleProfileUpdate() {
+            const newName = document.getElementById('updName').value;
+            const newEmail = document.getElementById('updEmail').value;
+            const newPass = document.getElementById('updPass').value;
+
+            window.profiliGuncelle(newName, newEmail, newPass);
+        }
+
+        // Giriş Formu (Şifremi Unuttum Eklendi)
         function showLoginForm() {
             const contentDiv = document.getElementById('panelContent');
             contentDiv.innerHTML = `
@@ -872,7 +938,25 @@
                 <input type="email" id="emailInput" class="auth-input" placeholder="E-posta Adresi">
                 <input type="password" id="passInput" class="auth-input" placeholder="Şifre">
 
+                <div style="text-align:right; margin-bottom:5px;">
+                    <span onclick="showForgotPasswordForm()" style="font-size:0.8rem; color:#e74c3c; cursor:pointer; text-decoration:underline;">
+                        Şifremi Unuttum / Şifre Belirle
+                    </span>
+                </div>
+
                 <button class="auth-btn btn-primary" onclick="handleLogin()">Giriş Yap</button>
+
+                <div style="display:flex; align-items:center; margin:10px 0;">
+                    <div style="flex:1; height:1px; background:#ddd;"></div>
+                    <span style="padding:0 10px; color:#999; font-size:0.8rem;">VEYA</span>
+                    <div style="flex:1; height:1px; background:#ddd;"></div>
+                </div>
+
+                <button class="auth-btn" onclick="window.googleIleGiris()" 
+                        style="background:white; color:#444; border:1px solid #ddd; display:flex; align-items:center; justify-content:center; gap:10px;">
+                    <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="20" alt="G">
+                    Google ile Devam Et
+                </button>
 
                 <p class="auth-toggle-text" onclick="showRegisterForm()">
                     Hesabın yok mu? <strong>Kayıt Ol</strong>
@@ -881,7 +965,43 @@
         `;
         }
 
-        // Kayıt Formunu HTML olarak çizen fonksiyon
+        // --- YENİ: SADECE ŞİFRE SIFIRLAMA EKRANI ---
+        function showForgotPasswordForm() {
+            const contentDiv = document.getElementById('panelContent');
+
+            contentDiv.innerHTML = `
+                <div class="venue-header">
+                    <h2 class="venue-name">🔒 Şifremi Unuttum</h2>
+                    <p>Hesabına bağlı e-posta adresini gir, sana sıfırlama bağlantısı gönderelim.</p>
+                </div>
+                <div class="auth-form">
+                    <label style="font-size:0.8rem; font-weight:bold; color:#666;">E-posta Adresi</label>
+                    <input type="email" id="resetEmailInput" class="auth-input" placeholder="ornek@metu.edu.tr">
+                    
+                    <button class="auth-btn btn-primary" onclick="handlePasswordReset()">
+                        🚀 Bağlantı Gönder
+                    </button>
+                    
+                    <button class="auth-btn btn-secondary" onclick="showLoginForm()" 
+                            style="background:transparent; color:#666; border:1px solid #ddd; margin-top:10px;">
+                        ← Giriş Ekranına Dön
+                    </button>
+                </div>
+            `;
+        }
+
+        // Bu formdaki butona basılınca çalışacak ara fonksiyon
+        function handlePasswordReset() {
+            const email = document.getElementById('resetEmailInput').value;
+            if (!email) {
+                alert("Lütfen e-posta adresinizi yazın.");
+                return;
+            }
+            // Firebase fonksiyonuna maili parametre olarak gönderiyoruz
+            window.sifreSifirla(email);
+        }
+
+        // Kayıt Formu (Google Butonu Eklendi)
         function showRegisterForm() {
             const contentDiv = document.getElementById('panelContent');
             contentDiv.innerHTML = `
@@ -890,16 +1010,69 @@
                 <p>Yeni bir hesap oluştur.</p>
             </div>
             <div class="auth-form">
+                <input type="text" id="usernameInput" class="auth-input" placeholder="Kullanıcı Adı (Örn: ODTÜlü)">
                 <input type="email" id="emailInput" class="auth-input" placeholder="E-posta Adresi">
                 <input type="password" id="passInput" class="auth-input" placeholder="Şifre (En az 6 karakter)">
 
                 <button class="auth-btn btn-secondary" onclick="handleRegister()">Kayıt Ol</button>
+
+                <div style="display:flex; align-items:center; margin:10px 0;">
+                    <div style="flex:1; height:1px; background:#ddd;"></div>
+                    <span style="padding:0 10px; color:#999; font-size:0.8rem;">VEYA</span>
+                    <div style="flex:1; height:1px; background:#ddd;"></div>
+                </div>
+
+                <button class="auth-btn" onclick="window.googleIleGiris()" 
+                        style="background:white; color:#444; border:1px solid #ddd; display:flex; align-items:center; justify-content:center; gap:10px;">
+                    <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="20" alt="G">
+                    Google ile Devam Et
+                </button>
 
                 <p class="auth-toggle-text" onclick="showLoginForm()">
                     Zaten hesabın var mı? <strong>Giriş Yap</strong>
                 </p>
             </div>
         `;
+        }
+
+        // Google Kaydı Sonrası Şifre Belirleme Ekranı
+        function showSetPasswordForm() {
+            const contentDiv = document.getElementById('panelContent');
+            const panel = document.getElementById('infoPanel');
+
+            contentDiv.innerHTML = `
+                <div class="venue-header">
+                    <h2 class="venue-name">🔐 Şifre Belirleyin</h2>
+                    <p>Hesabınız Google ile oluşturuldu. E-posta ile de giriş yapabilmek için lütfen bir şifre belirleyin.</p>
+                </div>
+                <div class="auth-form">
+                    <input type="password" id="googleNewPass" class="auth-input" placeholder="Yeni Şifre (En az 6 karakter)">
+                    
+                    <button class="auth-btn btn-primary" onclick="handleGooglePasswordSet()">
+                        Şifreyi Kaydet ve Tamamla
+                    </button>
+                    
+                    <p style="font-size:0.8rem; color:#999; text-align:center; margin-top:10px;">
+                        Not: Bu adımı geçerseniz, daha sonra profilinizden şifre belirleyebilirsiniz.
+                    </p>
+                    
+                     <button class="auth-btn btn-secondary" onclick="closePanel()" style="background:#95a5a6; margin-top:5px;">
+                        Bu Adımı Geç
+                    </button>
+                </div>
+            `;
+
+            panel.classList.add('active');
+        }
+
+        // Butona basılınca çalışacak ara fonksiyon
+        function handleGooglePasswordSet() {
+            const pass = document.getElementById('googleNewPass').value;
+            if (pass.length < 6) {
+                alert("Şifre en az 6 karakter olmalı!");
+                return;
+            }
+            window.googleSifreKaydet(pass);
         }
 
         // Butonlara basılınca çalışacak ara fonksiyonlar
@@ -910,17 +1083,25 @@
         }
 
         function handleRegister() {
+            const username = document.getElementById('usernameInput').value; // İsim verisini al
             const email = document.getElementById('emailInput').value;
             const pass = document.getElementById('passInput').value;
-            window.kayitOl(email, pass); // Firebase fonksiyonunu çağır
+
+            if (!username) {
+                alert("Lütfen bir kullanıcı adı belirleyin!");
+                return;
+            }
+
+            // Artık 3 parametre gönderiyoruz: İsim, Email, Şifre
+            window.kayitOl(email, pass, username);
         }
     </script>
     <script type="module">
         // 1. Gerekli kütüphaneleri içeri aktarıyoruz
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
         import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-analytics.js";
-        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js";
-        import { getFirestore, collection, getDocs, addDoc, doc, updateDoc } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js";
+        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile, updateEmail, updatePassword, GoogleAuthProvider, signInWithPopup, sendPasswordResetEmail, getAdditionalUserInfo } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js";
+        import { getFirestore, collection, getDocs, addDoc, doc, updateDoc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js";
 
         // 2. Senin Firebase Ayarların
         const firebaseConfig = {
@@ -940,10 +1121,19 @@
         const db = getFirestore(app);
 
         // --- GLOBAL FONKSİYONLAR (Butonlar için) ---
-        window.kayitOl = async (email, sifre) => {
+        // --- GLOBAL FONKSİYONLAR ---
+        window.kayitOl = async (email, sifre, kullaniciAdi) => {
             try {
+                // 1. Kullanıcıyı oluştur
                 const userCredential = await createUserWithEmailAndPassword(auth, email, sifre);
-                alert("Kayıt başarılı! Hoşgeldin: " + userCredential.user.email);
+
+                // 2. Profiline Kullanıcı Adını işle
+                await updateProfile(userCredential.user, {
+                    displayName: kullaniciAdi
+                });
+
+                alert("Kayıt başarılı! Hoşgeldin, " + kullaniciAdi);
+
             } catch (error) {
                 alert("Hata: " + error.message);
             }
@@ -958,12 +1148,206 @@
             }
         };
 
+        window.sifreSifirla = async (email) => {
+            try {
+                await sendPasswordResetEmail(auth, email);
+
+                alert("✅ Şifre sıfırlama bağlantısı gönderildi!\nMail kutunuzu (ve spam klasörünü) kontrol edin.");
+
+                if (window.showLoginForm) window.showLoginForm();
+
+            } catch (error) {
+                console.error(error);
+                if (error.code === 'auth/user-not-found') {
+                    alert("⚠️ Bu mail adresiyle kayıtlı bir kullanıcı bulunamadı.");
+                } else if (error.code === 'auth/invalid-email') {
+                    alert("⚠️ Geçersiz bir e-posta adresi girdiniz.");
+                } else {
+                    alert("Hata: " + error.message);
+                }
+            }
+        };
+
+        window.googleIleGiris = async () => {
+            try {
+                const provider = new GoogleAuthProvider();
+                const result = await signInWithPopup(auth, provider);
+                const user = result.user;
+
+                // --- İLK KEZ Mİ KAYIT OLUYOR KONTROLÜ ---
+                const details = getAdditionalUserInfo(result);
+
+                if (details.isNewUser) {
+                    // EĞER YENİ KULLANICIYSA: Şifre belirleme ekranını aç
+                    // (Normal script'teki fonksiyonu çağırmak için biraz bekleyelim ki panel hazır olsun)
+                    if (window.showSetPasswordForm) {
+                        window.showSetPasswordForm();
+                    }
+                } else {
+                    // ESKİ KULLANICIYSA: Direkt içeri al
+                    alert("Tekrar Hoşgeldin! " + user.displayName);
+                    if (document.getElementById('infoPanel')) {
+                        document.getElementById('infoPanel').classList.remove('active');
+                    }
+                }
+
+            } catch (error) {
+                console.error(error);
+                alert("Google Giriş Hatası: " + error.message);
+            }
+        };
+
+        window.googleSifreKaydet = async (newPass) => {
+            const user = auth.currentUser;
+            if (!user) return;
+
+            try {
+                await updatePassword(user, newPass);
+                alert("Harika! Şifreniz oluşturuldu. Artık hem Google hem de şifre ile girebilirsiniz.");
+
+                // Paneli kapat
+                const panel = document.getElementById('infoPanel');
+                if (panel) panel.classList.remove('active');
+
+            } catch (error) {
+                console.error(error);
+                // Eğer kullanıcı Google ile girdikten sonra çok zaman geçtiyse güvenlik hatası verebilir
+                if (error.code === 'auth/requires-recent-login') {
+                    alert("Oturum süresi doldu. Lütfen tekrar Google ile giriş yapıp deneyin.");
+                } else {
+                    alert("Hata: " + error.message);
+                }
+            }
+        };
+
         window.cikisYap = async () => {
             try {
                 await signOut(auth);
                 alert("Çıkış yapıldı.");
             } catch (error) {
                 console.error(error);
+            }
+        };
+
+        window.profiliGuncelle = async (newName, newEmail, newPass) => {
+            const user = auth.currentUser;
+
+            if (!user) {
+                alert("Oturum açık değil!");
+                return;
+            }
+
+            let message = "";
+            let errorOccurred = false;
+
+            try {
+                // 1. İsim Güncelleme
+                if (newName && newName !== user.displayName) {
+                    await updateProfile(user, { displayName: newName });
+                    message += "✅ İsim güncellendi.\n";
+                    window.currentUserName = newName; // Global değişkeni de güncelle
+                }
+
+                // 2. Email Güncelleme (Hassas İşlem)
+                if (newEmail && newEmail !== user.email) {
+                    await updateEmail(user, newEmail);
+                    message += "✅ E-posta güncellendi.\n";
+                    window.currentUserEmail = newEmail;
+                }
+
+                // 3. Şifre Güncelleme (Hassas İşlem)
+                if (newPass && newPass.length >= 6) {
+                    await updatePassword(user, newPass);
+                    message += "✅ Şifre güncellendi.\n";
+                } else if (newPass && newPass.length < 6) {
+                    alert("Şifre en az 6 karakter olmalı!");
+                    return;
+                }
+
+                if (message) {
+                    alert(message);
+                    // Sayfayı yenilemeye gerek yok ama paneli güncel haliyle tekrar açabiliriz
+                    if (window.openAuthPanel) window.openAuthPanel();
+                } else {
+                    alert("Değişiklik yapmadınız.");
+                }
+
+            } catch (error) {
+                console.error(error);
+                // Hassas işlemler için özel hata yönetimi
+                if (error.code === 'auth/requires-recent-login') {
+                    alert("Güvenlik gereği E-posta veya Şifre değiştirmek için lütfen ÇIKIŞ YAPIP TEKRAR GİRİN.");
+                } else {
+                    alert("Güncelleme Hatası: " + error.message);
+                }
+            }
+        };
+
+        window.profilResmiYukle = async (file) => {
+            const user = auth.currentUser;
+            if (!user) return;
+
+            try {
+                console.log("Resim işleniyor...");
+
+                // 1. Resmi Okuyucu Oluştur
+                const reader = new FileReader();
+
+                reader.onload = async (e) => {
+                    const img = new Image();
+                    img.src = e.target.result;
+
+                    img.onload = async () => {
+                        // 2. Resmi Küçült (Canvas ile) - Maksimum 300x300 piksel
+                        const canvas = document.createElement('canvas');
+                        const ctx = canvas.getContext('2d');
+
+                        const maxSize = 300; // Profil fotosu için yeterli
+                        let width = img.width;
+                        let height = img.height;
+
+                        if (width > height) {
+                            if (width > maxSize) {
+                                height *= maxSize / width;
+                                width = maxSize;
+                            }
+                        } else {
+                            if (height > maxSize) {
+                                width *= maxSize / height;
+                                height = maxSize;
+                            }
+                        }
+
+                        canvas.width = width;
+                        canvas.height = height;
+                        ctx.drawImage(img, 0, 0, width, height);
+
+                        // 3. Resmi Base64 Metnine Çevir (JPEG formatında, kalite 0.7)
+                        const base64String = canvas.toDataURL('image/jpeg', 0.7);
+
+                        // 4. Bu metni Firestore'a "users" koleksiyonuna kaydet
+                        // users -> [USER_ID] -> { photoBase64: "..." }
+                        const userRef = doc(db, "users", user.uid);
+
+                        // setDoc kullanıyoruz, merge:true ile varsa günceller yoksa yaratır
+                        await setDoc(userRef, { photoBase64: base64String }, { merge: true });
+
+                        // 5. Global değişkeni güncelle ve paneli yenile
+                        window.currentUserPhoto = base64String;
+                        alert("Profil resmi güncellendi! 🎉");
+
+                        if (window.openAuthPanel) window.openAuthPanel();
+                    };
+                };
+
+                reader.readAsDataURL(file);
+
+            } catch (error) {
+                console.error("Hata:", error);
+                alert("Resim işlenirken hata oluştu: " + error.message);
+                if (document.getElementById('profileDisplayImage')) {
+                    document.getElementById('profileDisplayImage').style.opacity = '1';
+                }
             }
         };
 
@@ -1072,31 +1456,44 @@
             }
         };
 
-        // --- KULLANICI DURUMU DİNLEYİCİSİ (DÜZELTİLDİ) ---
-        onAuthStateChanged(auth, (user) => {
+        onAuthStateChanged(auth, async (user) => {
             const profileBtn = document.getElementById('mainProfileBtn');
             const panel = document.getElementById('infoPanel');
 
             if (user) {
-                // GİRİŞ YAPILDI
                 console.log("Giriş yapıldı:", user.email);
                 window.currentUserEmail = user.email;
+                window.currentUserName = user.displayName;
+
+                let photo = user.photoURL;
+
+                if (!photo) {
+                    try {
+                        const userDoc = await getDoc(doc(db, "users", user.uid));
+                        if (userDoc.exists() && userDoc.data().photoBase64) {
+                            photo = userDoc.data().photoBase64;
+                        }
+                    } catch (e) {
+                        console.log("Profil resmi çekilemedi:", e);
+                    }
+                }
+
+                window.currentUserPhoto = photo;
 
                 profileBtn.innerHTML = "✅";
                 profileBtn.style.border = "2px solid #2ecc71";
 
-                // Admin kontrolü
                 if (window.isAdmin && window.isAdmin()) {
                     document.getElementById('addVenueBtn').style.display = 'flex';
                 }
 
-                // Eğer giriş paneli açıksa kapat
                 if (panel) panel.classList.remove('active');
 
             } else {
-                // ÇIKIŞ YAPILDI
                 console.log("Çıkış yapıldı.");
                 window.currentUserEmail = null;
+                window.currentUserName = null;
+                window.currentUserPhoto = null;
 
                 document.getElementById('addVenueBtn').style.display = 'none';
                 profileBtn.innerHTML = '<img src="logo.png" alt="Profil" class="profile-btn-img">';
